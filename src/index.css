@@ -50,3 +50,20 @@ code {
     transform: rotate(360deg);
   }
 }
+
+.tableDiv{
+  margin-top: 3%;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 3%;
+}
+
+.amplify-textare{
+  text-align: left;
+}
+
+.deleteIcon{
+  font-size: 30px;
+  margin-top: 10%;
+}

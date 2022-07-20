@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, 
+                useEffect,
+                useRef,
+	              TextareaHTMLAttributes } from "react";
 import { Auth, Hub, API, Storage } from 'aws-amplify';
 import Amplify from 'aws-amplify';
 import config from './aws-exports.js';
@@ -6,8 +9,21 @@ import { listGobjs } from './graphql/queries';
 import { createGobj as createGobjMutation, 
          deleteGobj as deleteGobjMutation, 
          updateGobj as updateGobjMutation } from './graphql/mutations';
-import { Heading,
-         ToggleButton  } from '@aws-amplify/ui-react';
+import { Alert,
+         Button,
+         Heading,
+         ToggleButton,
+         Flex, 
+         Table, 
+         TableCell, 
+         TableHead,
+         TableRow,
+         TableBody,
+         ThemeProvider,
+         Theme,
+         TextAreaField,
+         SelectField } from '@aws-amplify/ui-react';
+import { AiTwotoneDelete } from "react-icons/ai";
 import "@aws-amplify/ui-react/styles.css";
 
 
@@ -18,8 +34,7 @@ const initialFormState = { customer: '',
                            claim: '', 
                            winloss: '', 
                            priority: '', 
-                           serviceteam: '', 
-                           user: '' }
+                           serviceteam: '' }
 
 function App() {
 
@@ -51,6 +66,34 @@ function App() {
       .catch(() => console.log('Not signed in'));
   }
 
+  // Table Theme
+  const theme: Theme = {
+    name: 'table-theme',
+    tokens: {
+      components: {
+        table: {
+          row: {
+            hover: {
+              backgroundColor: { value: '{colors.blue.20}' },
+            },
+  
+            striped: {
+              backgroundColor: { value: '{colors.blue.10}' },
+            },
+          },
+  
+          header: {
+            color: { value: '{colors.blue.80}' },
+            fontSize: { value: '{fontSizes.xl}' },
+          },
+  
+          data: {
+            fontWeight: { value: '{fontWeights.semibold}' },
+          },
+        },
+      },
+    },
+  };
 
   // For Gobj
   const [gobjs, setGobjs] = useState([]);
@@ -60,6 +103,7 @@ function App() {
     fetchGobjs();
   }, []);
 
+  // Fetch the gobjs in the table
   async function fetchGobjs() {
     const apiData = await API.graphql({ query: listGobjs });
     setGobjs(apiData.data.listGobjs.items);
@@ -67,6 +111,7 @@ function App() {
 
   // Creating gobjs
   async function createGobj() {
+    changeAdding();
     if (!formData.customer) return;
     // await API.graphql({ query: createGobjMutation, variables: { input: formData } });
     await API.graphql({ query: createGobjMutation, variables: { input: { customer: formData.customer, 
@@ -75,7 +120,6 @@ function App() {
                                                                          winloss: formData.winloss,
                                                                          priority: formData.priority,
                                                                          serviceteam: formData.serviceteam,
-                                                                         user: formData.user
                                                                         } } });
     setGobjs([ ...gobjs, formData ]);
     setFormData(initialFormState);
@@ -90,6 +134,25 @@ function App() {
     await API.graphql({ query: deleteGobjMutation, variables: { input: { id } }});
   }
 
+  // Adding
+  const[adding, setAdding] = useState(false);
+  
+  async function changeAdding() {
+    setAdding(!adding);
+  }
+
+  // Editing
+  const[editid, setEditid] = useState('');
+
+  async function change({ id }){
+    setEditid(id);
+    console.log(editid);
+    // set adding = false
+    // 
+  }
+
+
+  // Controlling who can edit and delete
   async function showUser(){
     console.log(user);
   }
@@ -120,74 +183,141 @@ function App() {
       </button>
 
       <Heading level={1}>Dashboard</Heading>
-      <ToggleButton onClick={() => showUser()}>
-        Click to Add
-      </ToggleButton>
+
+      <div className='tableDiv'>
+        <ThemeProvider theme={theme} colorMode="light">
+          <Table highlightOnHover variation="striped">
+            <TableHead>
+              <TableRow>
+                <TableCell className='theadCell'><b>Customer, SA, Gap</b></TableCell>
+                <TableCell><b>Service</b></TableCell>
+                <TableCell><b>GCP Claim/Customer Feedback</b></TableCell>
+                <TableCell><b>Win/Loss to GCP? Key factor resulting in loss and learnings</b></TableCell>
+                <TableCell><b>Priority/AWS GCP Compete Team Response</b></TableCell>
+                <TableCell><b>Service Team PFR / Roadmap</b></TableCell>
+                <TableCell>
+                <ToggleButton onClick={() => changeAdding()}>
+                  {adding? (<>HIDE</>):(<>ADD </>)}
+                </ToggleButton>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+
+            {adding? (
+            <>
+              <TableRow>
+                <TableCell>
+                  <TextAreaField 
+                    fontSize="var(--amplify-font-sizes-small)" 
+                    label="" 
+                    variation="quiet" 
+                    placeholder="..."
+                    onChange={e => setFormData({ ...formData, 'customer': e.target.value})}
+                    value={formData.customer}
+                />
+                </TableCell>
+                <TableCell>
+                  <TextAreaField 
+                    fontSize="var(--amplify-font-sizes-small)" 
+                    label="" 
+                    variation="quiet" 
+                    placeholder="..."
+                    onChange={e => setFormData({ ...formData, 'service': e.target.value})}
+                    value={formData.service}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextAreaField 
+                    fontSize="var(--amplify-font-sizes-small)" 
+                    label="" 
+                    variation="quiet" 
+                    placeholder="..."
+                    onChange={e => setFormData({ ...formData, 'claim': e.target.value})}
+                    value={formData.claim}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextAreaField 
+                    fontSize="var(--amplify-font-sizes-small)" 
+                    label="" 
+                    variation="quiet" 
+                    placeholder="..."
+                    onChange={e => setFormData({ ...formData, 'winloss': e.target.value})}
+                    value={formData.winloss}
+                  />
+                </TableCell>
+                <TableCell>
+                <SelectField placeholder="Select Priority" value={formData.priority} onChange={e => setFormData({ ...formData, 'priority': e.target.value})}>
+                  <option value="Priority: High" fontSize="var(--amplify-font-sizes-small)">High</option>
+                  <option value="Priority: Medium" fontSize="var(--amplify-font-sizes-small)">Medium</option>
+                  <option value="Priority: Low" fontSize="var(--amplify-font-sizes-small)">Low</option>
+                </SelectField>
+                </TableCell>
+                <TableCell>
+                  <TextAreaField 
+                    fontSize="var(--amplify-font-sizes-small)" 
+                    label="" 
+                    variation="quiet" 
+                    placeholder="..."
+                    onChange={e => setFormData({ ...formData, 'serviceteam': e.target.value})}
+                    value={formData.serviceteam}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Button
+                    loadingText=""
+                    onClick={() => createGobj()}
+                    ariaLabel=""
+                  >
+                    Submit
+                  </Button>
+              </TableCell>
+              </TableRow>
+            </>
+
+            ) 
+            :
+            (<></>)}
+
+              {/* Iterating over the gobjs */}
+              {
+                gobjs.map(gobj => (
+                  <TableRow key={gobj.id}>
+                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.customer}</TableCell>
+                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.service}</TableCell>
+                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.claim}</TableCell>
+                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.winloss}</TableCell>
+                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.priority}</TableCell>
+                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.serviceteam}</TableCell>
+                    <TableCell>
+                      <Button onClick={() => change(gobj)}>EDIT</Button>
+                      <div>
+                        <AiTwotoneDelete className='deleteIcon' onDoubleClick={() => deleteGobj(gobj)}/>
+                      </div>
+                    </TableCell>
+                    {/* <td>{gobj.user}</td> */}
+                    {/* <td><button className='editButton' onClick={() => editGobj(gobj)}>EDIT</button></td> */}
+                    {/* <td><button className='deleteButton' onClick={() => deleteGobj(gobj)}>DELETE</button></td> */}
+                  </TableRow>
+                ))
+              }
+
+            </TableBody>
+          </Table>
+        </ThemeProvider>
+      </div>
+      
 
       <table>
         <thead>
         <tr>
-            <td>
-              {/* Customer, SA, Gap input  */}
-              <textarea
-                className='inputStyle'
-                onChange={e => setFormData({ ...formData, 'customer': e.target.value})}
-                placeholder="Customer, SA, Gap"
-                value={formData.customer}
-              />
-            </td>
-            <td>
-              {/* Service  */}
-              <textarea
-                className='inputStyle'
-                onChange={e => setFormData({ ...formData, 'service': e.target.value})}
-                placeholder="Service"
-                value={formData.service}
-              />
-            </td>
-            <td>
-              {/* Claim  */}
-              <textarea
-                className='inputStyle'
-                onChange={e => setFormData({ ...formData, 'claim': e.target.value})}
-                placeholder={"GCP Claim/Customer Feedback"}
-                value={formData.claim}
-              />        
-            </td>
-            <td>
-              {/* Win/Loss  */}
-              <textarea
-                className='inputStyle'
-                onChange={e => setFormData({ ...formData, 'winloss': e.target.value})}
-                placeholder="Win/Loss to GCP? Key factor resulting in loss and learnings"
-                value={formData.winloss}
-              />
-            </td>
-            <td>
-              {/* Priority  */}
-              <select name="priority" 
-                      id="addPriority" 
-                      required 
-                      value={formData.priority} 
-                      onChange={(e) => setFormData({ ...formData, 'priority': e.target.value})}>
-                  <option>Select Priority</option>
-                  <option value="Priority: High">Priority: High</option>
-                  <option value="Priority: Medium">Priority: Medium</option>
-                  <option value="Priority: Low">Priority: Low</option>
-              </select>   
-            </td>
-            <td>
-              {/* Service Team  */}
-              <textarea
-                className='inputStyle'
-                onChange={e => setFormData({ ...formData, 'serviceteam': e.target.value})}
-                placeholder="Service Team PFR/Roadmap"
-                value={formData.serviceteam}
-              />
-            </td>
-            <button className='addButton' onClick={() => createGobj()}>ADD</button>  
+     
           </tr>
         </thead>
+
+
       </table>
       </>
     )}
