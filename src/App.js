@@ -22,7 +22,8 @@ import { Alert,
          ThemeProvider,
          Theme,
          TextAreaField,
-         SelectField } from '@aws-amplify/ui-react';
+         SelectField,
+         useTheme } from '@aws-amplify/ui-react';
 import { AiTwotoneDelete } from "react-icons/ai";
 import "@aws-amplify/ui-react/styles.css";
 
@@ -95,6 +96,9 @@ function App() {
     },
   };
 
+  // For signin and out button
+  const { tokens } = useTheme();
+
   // For Gobj
   const [gobjs, setGobjs] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
@@ -134,10 +138,36 @@ function App() {
     await API.graphql({ query: deleteGobjMutation, variables: { input: { id } }});
   }
 
+  // Editing gobj
+  async function editGobj({ id }){
+    console.log(id);
+    if(!formData.customer) return;
+    await API.graphql({ query: updateGobjMutation,
+    variables: { input: { id: id,
+                          customer: formData.customer,
+                          service: formData.service,
+                          claim: formData.claim,
+                          winloss: formData.winloss,
+                          priority: formData.priority,
+                          serviceteam: formData.serviceteam
+                        }
+
+                }
+    })
+    setEditid('');
+    setFormData(initialFormState);
+    fetchGobjs();
+  }
+
   // Adding
   const[adding, setAdding] = useState(false);
   
   async function changeAdding() {
+    if(adding == false){
+      if(editid!=''){
+        setEditid('');
+      }
+    }
     setAdding(!adding);
   }
 
@@ -147,10 +177,16 @@ function App() {
   async function change({ id }){
     setEditid(id);
     console.log(editid);
-    // set adding = false
-    // 
+    if(adding){
+      setAdding(false);
+    }
   }
 
+  async function clear() {
+    setFormData(initialFormState);
+    setAdding(false);
+    setEditid('');
+  }
 
   // Controlling who can edit and delete
   async function showUser(){
@@ -162,26 +198,13 @@ function App() {
 
     {user ? (
       <>
-      <p>
-        User is signed in!
-      </p>
-
-      {/* Sign out button */}
-      <button 
-        onClick={() => Auth.signOut()}>Sign Out
-      </button>
-
-      </>
-    ) : (
-      <>
-      <p>
-        User is not signed in!
-      </p>
-
-      <button 
-        onClick={() => Auth.federatedSignIn({customProvider: "AmazonFederate"})}>Signin With Midway
-      </button>
-
+      <div className = 'signInAndOutDiv'>
+        {/* Sign out button */}
+        <Button 
+          backgroundColor={tokens.colors.pink[40]}
+          onClick={() => Auth.signOut()}
+        ></Button>
+      </div>
       <Heading level={1}>Dashboard</Heading>
 
       <div className='tableDiv'>
@@ -266,13 +289,24 @@ function App() {
                   />
                 </TableCell>
                 <TableCell>
-                  <Button
-                    loadingText=""
-                    onClick={() => createGobj()}
-                    ariaLabel=""
-                  >
-                    Submit
-                  </Button>
+                  <div>
+                    <Button
+                      loadingText=""
+                      onClick={() => createGobj()}
+                      ariaLabel=""
+                    >
+                      Submit
+                    </Button>
+                  </div>
+                  <div>
+                    <Button
+                      loadingText=""
+                      onClick={() => clear()}
+                      ariaLabel=""
+                    >
+                      Cancel
+                    </Button>
+                  </div>
               </TableCell>
               </TableRow>
             </>
@@ -285,22 +319,110 @@ function App() {
               {
                 gobjs.map(gobj => (
                   <TableRow key={gobj.id}>
-                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.customer}</TableCell>
-                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.service}</TableCell>
-                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.claim}</TableCell>
-                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.winloss}</TableCell>
-                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.priority}</TableCell>
-                    <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.serviceteam}</TableCell>
-                    <TableCell>
-                      <Button onClick={() => change(gobj)}>EDIT</Button>
-                      <div>
-                        <AiTwotoneDelete className='deleteIcon' onDoubleClick={() => deleteGobj(gobj)}/>
-                      </div>
+                  {(gobj.id == editid) ?
+                  
+                  (
+                    <>
+                      <TableCell>
+                        <TextAreaField 
+                          fontSize="var(--amplify-font-sizes-small)" 
+                          label="" 
+                          variation="quiet" 
+                          placeholder={gobj.customer}
+                          onChange={e => setFormData({ ...formData, 'customer': e.target.value})}
+                          value={formData.customer}
+                      />
+                      </TableCell>
+                      <TableCell>
+                        <TextAreaField 
+                          fontSize="var(--amplify-font-sizes-small)" 
+                          label="" 
+                          variation="quiet" 
+                          placeholder={gobj.service}
+                          onChange={e => setFormData({ ...formData, 'service': e.target.value})}
+                          value={formData.service}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextAreaField 
+                          fontSize="var(--amplify-font-sizes-small)" 
+                          label="" 
+                          variation="quiet" 
+                          placeholder={gobj.claim}
+                          onChange={e => setFormData({ ...formData, 'claim': e.target.value})}
+                          value={formData.claim}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextAreaField 
+                          fontSize="var(--amplify-font-sizes-small)" 
+                          label="" 
+                          variation="quiet" 
+                          placeholder={gobj.winloss}
+                          onChange={e => setFormData({ ...formData, 'winloss': e.target.value})}
+                          value={formData.winloss}
+                        />
+                      </TableCell>
+                      <TableCell>
+                      <SelectField placeholder="Select Priority" value={formData.priority} onChange={e => setFormData({ ...formData, 'priority': e.target.value})}>
+                        <option value="Priority: High" fontSize="var(--amplify-font-sizes-small)">High</option>
+                        <option value="Priority: Medium" fontSize="var(--amplify-font-sizes-small)">Medium</option>
+                        <option value="Priority: Low" fontSize="var(--amplify-font-sizes-small)">Low</option>
+                      </SelectField>
+                      </TableCell>
+                      <TableCell>
+                        <TextAreaField 
+                          fontSize="var(--amplify-font-sizes-small)" 
+                          label="" 
+                          variation="quiet" 
+                          placeholder={gobj.serviceteam}
+                          onChange={e => setFormData({ ...formData, 'serviceteam': e.target.value})}
+                          value={formData.serviceteam}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <Button
+                            loadingText=""
+                            onClick={() => editGobj(gobj)}
+                            ariaLabel=""
+                          >
+                            Submit
+                          </Button>
+                        </div>
+                        <div>
+                          <Button
+                            loadingText=""
+                            onClick={() => clear()}
+                            ariaLabel=""
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                     </TableCell>
-                    {/* <td>{gobj.user}</td> */}
-                    {/* <td><button className='editButton' onClick={() => editGobj(gobj)}>EDIT</button></td> */}
-                    {/* <td><button className='deleteButton' onClick={() => deleteGobj(gobj)}>DELETE</button></td> */}
+                    </>
+                  ) :
+                  (
+                    <>
+                      <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.customer}</TableCell>
+                      <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.service}</TableCell>
+                      <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.claim}</TableCell>
+                      <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.winloss}</TableCell>
+                      <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.priority}</TableCell>
+                      <TableCell fontSize="var(--amplify-font-sizes-small)" >{gobj.serviceteam}</TableCell>
+                      <TableCell>
+                        <Button onClick={() => change(gobj)}>EDIT</Button>
+                        <div>
+                          <AiTwotoneDelete className='deleteIcon' onDoubleClick={() => deleteGobj(gobj)}/>
+                        </div>
+                      </TableCell>
+                      {/* <td>{gobj.user}</td> */}
+                      {/* <td><button className='editButton' onClick={() => editGobj(gobj)}>EDIT</button></td> */}
+                      {/* <td><button className='deleteButton' onClick={() => deleteGobj(gobj)}>DELETE</button></td> */}
+                    </>
+                  )}
                   </TableRow>
+
                 ))
               }
 
@@ -310,15 +432,20 @@ function App() {
       </div>
       
 
-      <table>
-        <thead>
-        <tr>
-     
-          </tr>
-        </thead>
 
-
-      </table>
+      </>
+    ) : (
+      <>
+      <Alert variation="info">Please sign-in to view the dashboard.</Alert>
+      <div className = 'signInAndOutDiv'>
+        <Button 
+          backgroundColor={tokens.colors.pink[40]}
+          onClick={() => Auth.federatedSignIn({customProvider: "AmazonFederate"})}
+          className='signInAndOut'
+        >
+          Sign-In with Midway
+        </Button>
+      </div>
       </>
     )}
    
