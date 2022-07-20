@@ -368,7 +368,7 @@ function App() {
                         />
                       </TableCell>
                       <TableCell>
-                      <SelectField placeholder="Select Priority" value={formData.priority} onChange={e => setFormData({ ...formData, 'priority': e.target.value})}>
+                      <SelectField placeholder="Select" value={formData.priority} onChange={e => setFormData({ ...formData, 'priority': e.target.value})}>
                         <option value="Priority: High" fontSize="var(--amplify-font-sizes-small)">High</option>
                         <option value="Priority: Medium" fontSize="var(--amplify-font-sizes-small)">Medium</option>
                         <option value="Priority: Low" fontSize="var(--amplify-font-sizes-small)">Low</option>
