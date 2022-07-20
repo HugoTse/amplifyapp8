@@ -296,6 +296,7 @@ function App() {
                       loadingText=""
                       onClick={() => createGobj()}
                       ariaLabel=""
+                      className='submitAndCancel'
                     >
                       Submit
                     </Button>
@@ -305,6 +306,7 @@ function App() {
                       loadingText=""
                       onClick={() => clear()}
                       ariaLabel=""
+                      className='submitAndCancel'
                     >
                       Cancel
                     </Button>
@@ -388,6 +390,7 @@ function App() {
                             loadingText=""
                             onClick={() => editGobj(gobj)}
                             ariaLabel=""
+                            className="submitAndCancel"
                           >
                             Submit
                           </Button>
@@ -397,6 +400,7 @@ function App() {
                             loadingText=""
                             onClick={() => clear()}
                             ariaLabel=""
+                            className="submitAndCancel"
                           >
                             Cancel
                           </Button>
