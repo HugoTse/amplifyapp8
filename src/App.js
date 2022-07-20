@@ -203,7 +203,9 @@ function App() {
         <Button 
           backgroundColor={tokens.colors.pink[40]}
           onClick={() => Auth.signOut()}
-        ></Button>
+        >
+          Sign Out
+        </Button>
       </div>
       <Heading level={1}>Dashboard</Heading>
 
